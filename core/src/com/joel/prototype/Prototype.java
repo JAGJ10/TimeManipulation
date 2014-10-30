@@ -3,25 +3,20 @@ package com.joel.prototype;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Pool;
 
 import java.util.ArrayList;
 
 public class Prototype extends Game {
-    private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
     private OrthographicCamera camera;
 
@@ -34,13 +29,7 @@ public class Prototype extends Game {
     private Batch spriteBatch;
 
     private Array<Rectangle> tiles;
-
-    private Pool<Rectangle> rectPool = new Pool<Rectangle>() {
-        @Override
-        protected Rectangle newObject () {
-            return new Rectangle();
-        }
-    };
+    private TiledMapTileLayer collisionLayer;
 
     @Override
     public void create() {
@@ -55,7 +44,6 @@ public class Prototype extends Game {
         level = new Level("prototype.tmx");
         renderer = new OrthogonalTiledMapRenderer(level.getMap());
 
-        //spriteBatch = new SpriteBatch();
         spriteBatch = renderer.getSpriteBatch();
 
         tiles = new Array<Rectangle>();
@@ -64,6 +52,8 @@ public class Prototype extends Game {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 640, 640);
         camera.update();
+
+        collisionLayer = (TiledMapTileLayer) level.getMap().getLayers().get(0);
     }
 
     @Override
@@ -118,54 +108,36 @@ public class Prototype extends Game {
         // in this frame
         player.getVelocity().scl(deltaTime);
 
-        //Rectangle playerRect = player.getBoundingRectangle();
-        Rectangle playerRect = rectPool.obtain();
-        playerRect.set(player.getPosition().x, player.getPosition().y, player.getWidth(), player.getHeight());
-        int startX, startY, endX, endY;
-        if (player.getVelocity().x > 0) {
-            startX = endX = (int)(player.getPosition().x + player.getWidth() + player.getVelocity().x);
-        } else {
-            startX = endX = (int)(player.getPosition().x + player.getVelocity().x);
-        }
-        startY = (int)(player.getPosition().y);
-        endY = (int)(player.getPosition().y + player.getHeight());
-        getTiles(startX, startY, endX, endY, tiles);
+        // save old position
+        float oldX = player.getX(), oldY = player.getY();
+        boolean collisionX = false, collisionY = false;
 
-        playerRect.x += player.getVelocity().x;
-        for (Rectangle tile : tiles) {
-            if (playerRect.overlaps(tile)) {
-                player.getVelocity().x = 0;
-                break;
-            }
+        // move on x
+        player.setX(player.getX() + player.getVelocity().x * deltaTime);
+
+        if (player.getVelocity().x < 0) // going left
+            collisionX = collidesLeft();
+        else if (player.getVelocity().x > 0) // going right
+            collisionX = collidesRight();
+
+        // react to x collision
+        if(collisionX) {
+            player.setX(oldX);
+            player.getVelocity().x = 0;
         }
 
-        playerRect.set(player.getPosition().x, player.getPosition().y - player.getHeight(), player.getWidth(), player.getHeight());
+        // move on y
+        player.setY(player.getY() + player.getVelocity().y * deltaTime * 5f);
 
-        if (player.getVelocity().y > 0) {
-            startY = endY = (int)(player.getPosition().y + player.getHeight() + player.getVelocity().y);
-        } else {
-            startY = endY = (int)(player.getPosition().y + player.getVelocity().y);
-        }
+        if (player.getVelocity().y < 0) // going down
+            player.setGrounded(collisionY = collidesBottom());
+        else if(player.getVelocity().y > 0) // going up
+            collisionY = collidesTop();
 
-        startX = (int)(player.getPosition().x);
-        endX = (int)(player.getPosition().x + player.getWidth());
-        getTiles(startX, startY, endX, endY, tiles);
-        playerRect.y += player.getVelocity().y;
-        for (Rectangle tile : tiles) {
-            if (playerRect.overlaps(tile)) {
-                // we actually reset the koala y-position here
-                // so it is just below/above the tile we collided with
-                // this removes bouncing :)
-                if (player.getVelocity().y > 0) {
-                    player.getVelocity().y = tile.y - player.getHeight();
-                } else {
-                    player.getPosition().y = tile.y + tile.height;
-                    // if we hit the ground, mark us as grounded so we can jump
-                    player.setGrounded(true);
-                }
-                player.getVelocity().y = 0;
-                break;
-            }
+        // react to y collision
+        if(collisionY) {
+            player.setY(oldY);
+            player.getVelocity().y = 0;
         }
 
         player.getPosition().add(player.getVelocity());
@@ -173,19 +145,38 @@ public class Prototype extends Game {
         player.getVelocity().x *= Player.DAMPING;
     }
 
-    private void getTiles (int startX, int startY, int endX, int endY, Array<Rectangle> tiles) {
-        TiledMapTileLayer layer = (TiledMapTileLayer)level.getMap().getLayers().get(0);
-        tiles.clear();
-        for (int y = startY; y <= endY; y++) {
-            for (int x = startX; x <= endX; x++) {
-                Cell cell = layer.getCell(x, y);
-                if (cell != null) {
-                    Rectangle rect = rectPool.obtain();
-                    rect.set(x, y, 1, 1);
-                    tiles.add(rect);
-                }
-            }
-        }
+    private boolean isCellBlocked(float x, float y) {
+        Cell cell = collisionLayer.getCell((int) (x / collisionLayer.getTileWidth()), (int) (y / collisionLayer.getTileHeight()));
+        return cell != null && cell.getTile() != null;
+    }
+
+    public boolean collidesRight() {
+        for(float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
+            if(isCellBlocked(player.getX() + player.getWidth(), player.getY() + step))
+                return true;
+        return false;
+    }
+
+    public boolean collidesLeft() {
+        for(float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
+            if(isCellBlocked(player.getX(), player.getY() + step))
+                return true;
+        return false;
+    }
+
+    public boolean collidesTop() {
+        for(float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
+            if(isCellBlocked(player.getX() + step, player.getY() + player.getHeight()))
+                return true;
+        return false;
+
+    }
+
+    public boolean collidesBottom() {
+        for(float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
+            if(isCellBlocked(player.getX() + step, player.getY()))
+                return true;
+        return false;
     }
 
     @Override
