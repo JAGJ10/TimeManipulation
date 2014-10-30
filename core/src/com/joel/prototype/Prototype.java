@@ -54,6 +54,8 @@ public class Prototype extends Game {
         camera.update();
 
         collisionLayer = (TiledMapTileLayer) level.getMap().getLayers().get(0);
+
+        Gdx.input.setInputProcessor(player);
     }
 
     @Override
@@ -79,20 +81,7 @@ public class Prototype extends Game {
     }
 
     public void updatePlayer(float deltaTime) {
-        if ((Gdx.input.isKeyPressed(Input.Keys.UP)) && player.isGrounded()) {
-            player.getVelocity().y += Player.JUMP_VELOCITY;
-            player.setGrounded(false);
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-            player.getVelocity().x = -Player.MAX_VELOCITY;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            player.getVelocity().x = Player.MAX_VELOCITY;
-        }
-
-        player.getVelocity().add(0, Player.GRAVITY);
+        player.getVelocity().y += Player.GRAVITY;
 
         // clamp the velocity to the maximum, x-axis only
         if (Math.abs(player.getVelocity().x) > Player.MAX_VELOCITY) {
@@ -107,7 +96,7 @@ public class Prototype extends Game {
         // multiply by delta time so we know how far we go
         // in this frame
         player.getVelocity().scl(deltaTime);
-
+    
         // save old position
         float oldX = player.getX(), oldY = player.getY();
         boolean collisionX = false, collisionY = false;
@@ -142,7 +131,7 @@ public class Prototype extends Game {
 
         player.getPosition().add(player.getVelocity());
         player.getVelocity().scl(1 / deltaTime);
-        player.getVelocity().x *= Player.DAMPING;
+        //player.getVelocity().x *= Player.DAMPING;
     }
 
     private boolean isCellBlocked(float x, float y) {

@@ -1,23 +1,23 @@
 package com.joel.prototype;
 
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 
-public class Player extends GameObject {
+public class Player extends GameObject implements InputProcessor {
     public static final float MAX_VELOCITY = 10f;
     public static final float JUMP_VELOCITY = 40f;
     public static final float DAMPING = 0.87f;
     public static final float GRAVITY = -2.5f;
 
     private boolean grounded;
-    private boolean running;
     private Vector2 velocity;
     private Vector2 position;
 
     public Player(Texture texture) {
         super(texture);
         this.grounded = false;
-        this.running = false;
         velocity = new Vector2();
         position = new Vector2();
     }
@@ -28,14 +28,6 @@ public class Player extends GameObject {
 
     public void setGrounded(boolean grounded) {
         this.grounded = grounded;
-    }
-
-    public boolean isRunning() {
-        return running;
-    }
-
-    public void setRunning(boolean running) {
-        this.running = running;
     }
 
     public Vector2 getVelocity() {
@@ -97,5 +89,65 @@ public class Player extends GameObject {
             //this.yVelocity = frameStates.get(frame - 1).yVelocity; //get framestates yVelocity somehow
             super.replayFrame(frame);
         }
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        switch (keycode) {
+            case Keys.W:
+                if (grounded) {
+                    velocity.y += JUMP_VELOCITY;
+                    grounded = false;
+                }
+                break;
+            case Keys.A:
+                velocity.x = -MAX_VELOCITY;
+                break;
+            case Keys.D:
+                velocity.x = MAX_VELOCITY;
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        switch (keycode) {
+            case Keys.A:
+            case Keys.D:
+                velocity.x = 0;
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(int amount) {
+        return false;
     }
 }
