@@ -26,18 +26,29 @@ public abstract class GameObject extends Sprite {
         this.keycode = keycode;
     }
 
+    public ArrayList<FrameState> getFrameStates() {
+        return frameStates;
+    }
+
+    public void setFrameStates(ArrayList<FrameState> frameStates) {
+        this.frameStates = frameStates;
+    }
+
+    public int getFrameCounter() {
+        return frameCounter;
+    }
+
+    public void setFrameCounter(int frameCounter) {
+        this.frameCounter = frameCounter;
+    }
+
     public void replayFrame(int frame) {
-        if (frame < frameStates.size()) {
+        if (frame < frameStates.size() && frame > 0) {
             FrameState fs;
-            if (frame > 0) {
-                fs = frameStates.get(frame);
-            } else {
-                return;
-            }
+            fs = frameStates.get(frame);
 
             this.setX(fs.x);
             this.setY(fs.y);
-
 
             if (fs.keycode > 0) {
                 keycode = fs.keycode;
@@ -62,7 +73,7 @@ public abstract class GameObject extends Sprite {
     }
 
     public void saveState(FrameState fs) {
-        frameStates.set(frameCounter, fs);
+        frameStates.add(frameCounter, fs);
         frameCounter++;
     }
 }

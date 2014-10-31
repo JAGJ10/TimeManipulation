@@ -26,6 +26,7 @@ public class Prototype extends Game implements InputProcessor {
     private ArrayList<GameObject> gameObjects;
     private Player player;
     private Texture texture;
+    private Texture textureAlpha;
     private Level level;
     private Batch spriteBatch;
 
@@ -38,6 +39,7 @@ public class Prototype extends Game implements InputProcessor {
         this.isPaused = false;
         gameObjects = new ArrayList<GameObject>();
         texture = new Texture("player.png");
+        textureAlpha = new Texture("playerAlpha.png");
         player = new Player(texture);
         player.setPosition(0, 32);
 
@@ -71,12 +73,25 @@ public class Prototype extends Game implements InputProcessor {
         renderer.setView(camera);
         renderer.render();
 
+        if (isPaused) {
+            ArrayList<FrameState> fs = player.getFrameStates();
+            for (int i = 0; i < fs.size(); i++) {
+                spriteBatch.begin();
+                spriteBatch.draw(textureAlpha, fs.get(i).x, fs.get(i).y, textureAlpha.getWidth(), textureAlpha.getHeight());
+                spriteBatch.end();
+            }
+        }
+
         spriteBatch.begin();
         spriteBatch.draw(player, player.getX(), player.getY(), player.getWidth(), player.getHeight());
         spriteBatch.end();
 
-        player.update(deltaTime);
-        this.checkCollisions(deltaTime);
+        if (!isPaused) {
+            player.update(deltaTime);
+            this.checkCollisions(deltaTime);
+        }
+
+        if (!recorded) player.saveStateAt(deltaTime);
     }
 
     public void checkCollisions(float deltaTime) {
@@ -160,6 +175,16 @@ public class Prototype extends Game implements InputProcessor {
             case Input.Keys.D:
                 player.setMoveRight(true);
                 break;
+            case Input.Keys.SPACE:
+                recorded = true;
+                break;
+            case Input.Keys.P:
+                isPaused = !isPaused;
+                break;
+            case Input.Keys.LEFT:
+                if (isPaused) {
+                    player.replayFrame(player.frameCounter);
+                }
         }
         player.setKeycode(keycode);
         return true;
