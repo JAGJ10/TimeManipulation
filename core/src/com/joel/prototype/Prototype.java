@@ -3,6 +3,7 @@ package com.joel.prototype;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -16,7 +17,7 @@ import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
 
-public class Prototype extends Game {
+public class Prototype extends Game implements InputProcessor {
     private OrthogonalTiledMapRenderer renderer;
     private OrthographicCamera camera;
 
@@ -38,9 +39,8 @@ public class Prototype extends Game {
         gameObjects = new ArrayList<GameObject>();
         texture = new Texture("player.png");
         player = new Player(texture);
-        player.setPosition(new Vector2(0, 33));
+        player.setPosition(0, 32);
 
-        // load the map, set the unit scale to 1/32 (1 unit == 32 pixels)
         level = new Level("prototype.tmx");
         renderer = new OrthogonalTiledMapRenderer(level.getMap());
 
@@ -48,14 +48,13 @@ public class Prototype extends Game {
 
         tiles = new Array<Rectangle>();
 
-        // create an orthographic camera, shows us 30x20 units of the world
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 640, 640);
         camera.update();
 
         collisionLayer = (TiledMapTileLayer) level.getMap().getLayers().get(0);
 
-        Gdx.input.setInputProcessor(player);
+        Gdx.input.setInputProcessor(this);
     }
 
     @Override
@@ -73,98 +72,138 @@ public class Prototype extends Game {
         renderer.render();
 
         spriteBatch.begin();
-        spriteBatch.draw(player, player.getPosition().x, player.getPosition().y, player.getWidth(), player.getHeight());
+        spriteBatch.draw(player, player.getX(), player.getY(), player.getWidth(), player.getHeight());
         spriteBatch.end();
 
-        this.updatePlayer(deltaTime);
         player.update(deltaTime);
+        this.checkCollisions(deltaTime);
     }
 
-    public void updatePlayer(float deltaTime) {
-        player.getVelocity().y += Player.GRAVITY;
-
-        // clamp the velocity to the maximum, x-axis only
-        if (Math.abs(player.getVelocity().x) > Player.MAX_VELOCITY) {
-            player.getVelocity().x = Math.signum(player.getVelocity().x) * Player.MAX_VELOCITY;
-        }
-
-        // clamp the velocity to 0 if it's < 1
-        if (Math.abs(player.getVelocity().x) < 1) {
-            player.getVelocity().x = 0;
-        }
-
-        // multiply by delta time so we know how far we go
-        // in this frame
-        player.getVelocity().scl(deltaTime);
-    
+    public void checkCollisions(float deltaTime) {
         // save old position
         float oldX = player.getX(), oldY = player.getY();
         boolean collisionX = false, collisionY = false;
 
-        // move on x
         player.setX(player.getX() + player.getVelocity().x * deltaTime);
 
-        if (player.getVelocity().x < 0) // going left
+        if (player.getVelocity().x < 0) {
             collisionX = collidesLeft();
-        else if (player.getVelocity().x > 0) // going right
+        } else if (player.getVelocity().x > 0) {
             collisionX = collidesRight();
+        }
 
-        // react to x collision
-        if(collisionX) {
+        if (collisionX) {
             player.setX(oldX);
             player.getVelocity().x = 0;
         }
 
-        // move on y
-        player.setY(player.getY() + player.getVelocity().y * deltaTime * 5f);
+        player.setY(player.getY() + player.getVelocity().y * deltaTime);
 
-        if (player.getVelocity().y < 0) // going down
-            player.setGrounded(collisionY = collidesBottom());
-        else if(player.getVelocity().y > 0) // going up
+        if (player.getVelocity().y < 0) { // going down
+            collisionY = collidesBottom();
+            player.setGrounded(collisionY);
+        } else if (player.getVelocity().y > 0) // going up
             collisionY = collidesTop();
 
         // react to y collision
-        if(collisionY) {
+        if (collisionY) {
             player.setY(oldY);
             player.getVelocity().y = 0;
         }
-
-        player.getPosition().add(player.getVelocity());
-        player.getVelocity().scl(1 / deltaTime);
-        //player.getVelocity().x *= Player.DAMPING;
     }
 
     private boolean isCellBlocked(float x, float y) {
         Cell cell = collisionLayer.getCell((int) (x / collisionLayer.getTileWidth()), (int) (y / collisionLayer.getTileHeight()));
-        return cell != null && cell.getTile() != null;
+        return (cell != null && cell.getTile() != null);
     }
 
     public boolean collidesRight() {
-        for(float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
-            if(isCellBlocked(player.getX() + player.getWidth(), player.getY() + step))
+        for (float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
+            if (isCellBlocked(player.getX() + player.getWidth(), player.getY() + step))
                 return true;
         return false;
     }
 
     public boolean collidesLeft() {
-        for(float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
-            if(isCellBlocked(player.getX(), player.getY() + step))
+        for (float step = 0; step < player.getHeight(); step += collisionLayer.getTileHeight() / 2)
+            if (isCellBlocked(player.getX(), player.getY() + step))
                 return true;
         return false;
     }
 
     public boolean collidesTop() {
-        for(float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
-            if(isCellBlocked(player.getX() + step, player.getY() + player.getHeight()))
+        for (float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
+            if (isCellBlocked(player.getX() + step, player.getY() + player.getHeight()))
                 return true;
         return false;
-
     }
 
     public boolean collidesBottom() {
-        for(float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
-            if(isCellBlocked(player.getX() + step, player.getY()))
+        for (float step = 0; step < player.getWidth(); step += collisionLayer.getTileWidth() / 2)
+            if (isCellBlocked(player.getX() + step, player.getY()))
                 return true;
+        return false;
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        switch (keycode) {
+            case Input.Keys.W:
+                if (player.isGrounded()) {
+                    player.getVelocity().y = Player.JUMP_VELOCITY;
+                    player.setGrounded(false);
+                }
+                break;
+            case Input.Keys.A:
+                player.setMoveLeft(true);
+                break;
+            case Input.Keys.D:
+                player.setMoveRight(true);
+                break;
+        }
+        player.setKeycode(keycode);
+        return true;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        switch (keycode) {
+            case Input.Keys.A:
+                player.setMoveLeft(false);
+            case Input.Keys.D:
+                player.setMoveRight(false);
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(int amount) {
         return false;
     }
 

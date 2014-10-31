@@ -6,9 +6,9 @@
  <tileset firstgid="2" name="tile1" tilewidth="32" tileheight="32">
   <image source="tile1.png" width="32" height="32"/>
  </tileset>
- <layer name="Tile Layer 1" width="20" height="20">
+ <layer name="Ground" width="20" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYmBgYKIiJhaQonYgzBsFwxtQmn5HweAGo/GLHVCzrAdhAE6/AG0=
+   eJxjYBgFo2DgABOVMbXdNpgALf063AA90sdgAKT6idr5DQDJAABp
   </data>
  </layer>
 </map>
