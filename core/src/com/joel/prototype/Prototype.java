@@ -176,6 +176,7 @@ public class Prototype extends Game implements InputProcessor {
                 player.setMoveRight(true);
                 break;
             case Input.Keys.SPACE:
+                isPaused = !isPaused;
                 recorded = true;
                 break;
             case Input.Keys.P:
@@ -183,7 +184,23 @@ public class Prototype extends Game implements InputProcessor {
                 break;
             case Input.Keys.LEFT:
                 if (isPaused) {
-                    player.replayFrame(player.frameCounter);
+                    int fCount = player.getFrameCounter() - 1;
+                    player.replayFrame(fCount);
+                    player.setFrameCounter(fCount--);
+                }
+                break;
+            case Input.Keys.RIGHT:
+                if (isPaused) {
+                    int fCount = player.getFrameCounter();
+                    player.replayFrame(fCount);
+                    player.setFrameCounter(++fCount);
+                }
+                break;
+            case Input.Keys.UP:
+                if (isPaused) {
+                    player.setVelocity(new Vector2(player.getVelocity().x, player.getVelocity().y + 1000f));
+                    int fCount = player.getFrameCounter() - 1;
+                    player.recalcStates(fCount);
                 }
         }
         player.setKeycode(keycode);
@@ -198,7 +215,10 @@ public class Prototype extends Game implements InputProcessor {
             case Input.Keys.D:
                 player.setMoveRight(false);
                 break;
+            case Input.Keys.SPACE:
+                isPaused = !isPaused;
         }
+        player.setKeycode(-10);
         return true;
     }
 

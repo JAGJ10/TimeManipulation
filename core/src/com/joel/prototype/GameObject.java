@@ -6,16 +6,15 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import java.util.ArrayList;
 
 public abstract class GameObject extends Sprite {
-    //protected double deltaTime;
     protected ArrayList<FrameState> frameStates;
     protected int frameCounter;
     protected int keycode;
 
     public GameObject(Texture texture) {
         super(texture);
-        //deltaTime = 0;
-        frameStates = new ArrayList<FrameState>();
-        frameCounter = 0;
+        this.frameStates = new ArrayList<FrameState>();
+        this.frameCounter = 0;
+        this.keycode = -10;
     }
 
     public int getKeycode() {

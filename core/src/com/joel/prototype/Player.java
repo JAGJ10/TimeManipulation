@@ -15,8 +15,6 @@ public class Player extends GameObject {
     private boolean moveRight;
     private Vector2 velocity;
 
-    //private int keycode;
-
     public Player(Texture texture) {
         super(texture);
         this.grounded = true;
@@ -92,5 +90,26 @@ public class Player extends GameObject {
             this.velocity.y = frameStates.get(frame - 1).yVelocity; //get framestates yVelocity somehow
             super.replayFrame(frame);
         }
+    }
+
+    @Override
+    public void recalcStates(int frame) {
+        FrameState fs;
+        this.frameStates.get(frame).yVelocity = this.velocity.y;
+        frame++;
+        float prevX = this.getX();
+        float prevY = this.getY();
+
+        for (int i = frame; i < this.frameStates.size(); i++) {
+            this.replayFrame(i);
+
+            fs = this.frameStates.get(i);
+            fs.x = this.getX();
+            fs.y = this.getY();
+            fs.yVelocity = this.velocity.y;
+        }
+
+        this.setX(prevX);
+        this.setY(prevY);
     }
 }
