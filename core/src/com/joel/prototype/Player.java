@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Player extends GameObject {
     public static final float MAX_VELOCITY = 400f;
-    public static final float JUMP_VELOCITY = 1000f;
+    public static float JUMP_VELOCITY = 1000f;
     public static final float GRAVITY = -50f;
 
     private boolean grounded;
@@ -50,6 +50,11 @@ public class Player extends GameObject {
     public void update(float deltaTime) {
         this.getVelocity().y += (Player.GRAVITY);
 
+        if (velocity.y > Player.JUMP_VELOCITY)
+            velocity.y = Player.JUMP_VELOCITY;
+        else if (velocity.y < -Player.JUMP_VELOCITY)
+            velocity.y = -Player.JUMP_VELOCITY;
+
         // clamp the velocity to the maximum, x-axis only
         if (Math.abs(this.getVelocity().x) > Player.MAX_VELOCITY) {
             this.getVelocity().x = Math.signum(this.getVelocity().x) * Player.MAX_VELOCITY;
@@ -86,7 +91,7 @@ public class Player extends GameObject {
 
     @Override
     public void replayFrame(int frame) {
-        if (frame < frameStates.size()) {
+        if (frame < frameStates.size() && frame > 0) {
             this.velocity.y = frameStates.get(frame - 1).yVelocity; //get framestates yVelocity somehow
             super.replayFrame(frame);
         }
@@ -94,15 +99,15 @@ public class Player extends GameObject {
 
     @Override
     public void recalcStates(int frame) {
-        FrameState fs;
+       /* FrameState fs;
         this.frameStates.get(frame).yVelocity = this.velocity.y;
         frame++;
         float prevX = this.getX();
         float prevY = this.getY();
-
+        System.out.println("prevY: " + prevY);
         for (int i = frame; i < this.frameStates.size(); i++) {
             this.replayFrame(i);
-
+            System.out.println("new y: " + this.getY());
             fs = this.frameStates.get(i);
             fs.x = this.getX();
             fs.y = this.getY();
@@ -110,6 +115,36 @@ public class Player extends GameObject {
         }
 
         this.setX(prevX);
-        this.setY(prevY);
+        this.setY(prevY);*/
+
+        FrameState fs = frameStates.get(0);
+        int prevKeycode;
+        //w keycode is 51
+        if (fs.keycode == 51) {
+            //if (player.isGrounded()) {
+            fs.yVelocity = Player.JUMP_VELOCITY;
+                //player.setGrounded(false);
+            //}
+            fs.y += fs.yVelocity * fs.deltaTime;
+        }
+
+        boolean justChanged = false;
+        for (int i = 1; i < frameStates.size(); i++) {
+            FrameState cur = frameStates.get(i);
+            prevKeycode = frameStates.get(i-1).keycode;
+            if (cur.keycode != prevKeycode && cur.keycode == 51) {
+                cur.yVelocity = Player.JUMP_VELOCITY;
+                justChanged = true;
+            }
+
+            if (!justChanged) {
+                cur.yVelocity = frameStates.get(i - 1).yVelocity + (Player.GRAVITY);
+                cur.y = frameStates.get(i - 1).y + cur.yVelocity * cur.deltaTime; //y can be negative because no collision detection
+                if (cur.y < 32) cur.y = 32;
+                System.out.println("Velocity: " + cur.yVelocity);
+                System.out.println("y: " + cur.y);
+            }
+            justChanged = false;
+        }
     }
 }

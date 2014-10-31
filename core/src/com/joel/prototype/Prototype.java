@@ -86,12 +86,12 @@ public class Prototype extends Game implements InputProcessor {
         spriteBatch.draw(player, player.getX(), player.getY(), player.getWidth(), player.getHeight());
         spriteBatch.end();
 
+        if (!recorded) player.saveStateAt(deltaTime);
+
         if (!isPaused) {
             player.update(deltaTime);
             this.checkCollisions(deltaTime);
         }
-
-        if (!recorded) player.saveStateAt(deltaTime);
     }
 
     public void checkCollisions(float deltaTime) {
@@ -198,9 +198,11 @@ public class Prototype extends Game implements InputProcessor {
                 break;
             case Input.Keys.UP:
                 if (isPaused) {
-                    player.setVelocity(new Vector2(player.getVelocity().x, player.getVelocity().y + 1000f));
+                    //player.setVelocity(new Vector2(player.getVelocity().x, player.getVelocity().y + 1000f));
+                    Player.JUMP_VELOCITY *= 2;
+                    System.out.println("jv: " + Player.JUMP_VELOCITY);
                     int fCount = player.getFrameCounter() - 1;
-                    player.recalcStates(fCount);
+                    player.recalcStates(0);
                 }
         }
         player.setKeycode(keycode);

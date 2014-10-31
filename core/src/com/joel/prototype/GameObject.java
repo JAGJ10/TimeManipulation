@@ -42,18 +42,15 @@ public abstract class GameObject extends Sprite {
     }
 
     public void replayFrame(int frame) {
-        if (frame < frameStates.size() && frame > 0) {
+        if (frame < frameStates.size() && frame >= 0) {
             FrameState fs;
             fs = frameStates.get(frame);
 
             this.setX(fs.x);
             this.setY(fs.y);
 
-            if (fs.keycode > 0) {
+            if (fs.keycode >= 0) {
                 keycode = fs.keycode;
-                /*for (Key key : fs.keys) {
-                    Keys.setKey(key, fs.keys[parseInt(key)]);
-                }*/
              }
 
             //restore animation keyframe here if i want
