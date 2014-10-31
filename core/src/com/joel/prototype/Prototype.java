@@ -11,9 +11,6 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
 
@@ -30,7 +27,6 @@ public class Prototype extends Game implements InputProcessor {
     private Level level;
     private Batch spriteBatch;
 
-    private Array<Rectangle> tiles;
     private TiledMapTileLayer collisionLayer;
 
     @Override
@@ -47,8 +43,6 @@ public class Prototype extends Game implements InputProcessor {
         renderer = new OrthogonalTiledMapRenderer(level.getMap());
 
         spriteBatch = renderer.getSpriteBatch();
-
-        tiles = new Array<Rectangle>();
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 640, 640);
@@ -200,10 +194,18 @@ public class Prototype extends Game implements InputProcessor {
                 if (isPaused) {
                     //player.setVelocity(new Vector2(player.getVelocity().x, player.getVelocity().y + 1000f));
                     Player.JUMP_VELOCITY *= 2;
-                    System.out.println("jv: " + Player.JUMP_VELOCITY);
-                    int fCount = player.getFrameCounter() - 1;
+                    //int fCount = player.getFrameCounter() - 1;
                     player.recalcStates(0);
                 }
+                break;
+            case Input.Keys.DOWN:
+                if (isPaused) {
+                    //player.setVelocity(new Vector2(player.getVelocity().x, player.getVelocity().y + 1000f));
+                    Player.JUMP_VELOCITY /= 2;
+                    //int fCount = player.getFrameCounter() - 1;
+                    player.recalcStates(0);
+                }
+                break;
         }
         player.setKeycode(keycode);
         return true;
