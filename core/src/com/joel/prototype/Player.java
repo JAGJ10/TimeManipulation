@@ -141,6 +141,7 @@ public class Player extends GameObject {
                 if (cur.y < 32) cur.y = 32;
                 System.out.println("Velocity: " + cur.yVelocity);
                 System.out.println("y: " + cur.y);
+
             }
             justChanged = false;
         }

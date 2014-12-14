@@ -37,7 +37,7 @@ public class Prototype extends Game implements InputProcessor {
         texture = new Texture("player.png");
         textureAlpha = new Texture("playerAlpha.png");
         player = new Player(texture);
-        player.setPosition(0, 32);
+        player.setPosition(32, 32);
 
         level = new Level("prototype.tmx");
         renderer = new OrthogonalTiledMapRenderer(level.getMap());
